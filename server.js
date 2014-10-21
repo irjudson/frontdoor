@@ -1,162 +1,63 @@
-if (process.env.NEW_RELIC_LICENSE_KEY && process.env.NEW_RELIC_APP_NAME) {
-    require('newrelic');
-}
-
-var express = require('express')
-  , app = express()
-  , core = require('nitrogen-core')
-  , server = require('http').createServer(app)
-  , BearerStrategy = require('passport-http-bearer').Strategy
-  , controllers = require('./controllers')
-  , exphbs = require('express-handlebars')
-  , hbs = exphbs.create({ defaultLayout: 'main' })
-  , LocalStrategy = require('passport-local').Strategy
-  , middleware = require('./middleware')
-  , mongoose = require('mongoose')
-  , passport = require('passport')
-  , path = require('path')
-  , PublicKeyStrategy = require('passport-publickey').Strategy;
+var core = require('nitrogen-core')
+  , http = require('http')
+  , httpProxy = require('http-proxy');
 
 core.config = require('./config');
 core.log = require('winston');
 
-var ensureLoggedIn = require('connect-ensure-login').ensureLoggedIn(core.config.user_login_path)
+var proxy = httpProxy.createProxyServer({});
+var endpoints = {
+    endpoints: {
+        api_keys: core.config.api_keys_endpoint,
+        messages: core.config.messages_endpoint,
+        permissions: core.config.permissions_endpoint,
+        principals: core.config.principals_endpoint,
+        subscriptions: core.config.subscriptions_endpoint,
+        users: core.config.users_endpoint
+    }
+};
 
-// You can use Loggly's log service by specifying these 4 environmental variables
-if (process.env.LOGGLY_SUBDOMAIN && process.env.LOGGLY_INPUT_TOKEN &&
-    process.env.LOGGLY_USERNAME && process.env.LOGGLY_PASSWORD) {
-
-    core.log.add(Loggly, {
-        "subdomain": process.env.LOGGLY_SUBDOMAIN,
-        "inputToken": process.env.LOGGLY_INPUT_TOKEN,
-        "auth": {
-            "username": process.env.LOGGLY_USERNAME,
-            "password": process.env.LOGGLY_PASSWORD
+var urlMatchesRules = function(url, paths) {
+    var idx;
+    core.log.info(url);
+    for (idx = 0; idx < paths.length; idx++) {
+        if (core.utils.stringStartsWith(url, paths[idx])) {
+            return true;
         }
-    });
+    }
+
+    return false;
 }
 
-core.log.remove(core.log.transports.Console);
-core.log.add(core.log.transports.Console, { colorize: true, timestamp: true, level: 'info' });
+var server = http.createServer(function(req, res) {
 
-core.log.info("connecting to mongodb instance: " + core.config.mongodb_connection_string);
-mongoose.connect(core.config.mongodb_connection_string);
+    // proxy request to correct server cluster
+    if (urlMatchesRules(req.url, core.config.ingestion_url_rules) && req.method === "POST") {
+        core.log.info('redirecting to ingestion server: ' + req.url);
 
-app.use(express.logger(core.config.request_log_format));
-app.use(express.compress());
-app.use(express.bodyParser());
-app.use(express.cookieParser());
-app.use(express.cookieSession({
-    secret: core.config.user_session_secret,
-    cookie: {
-        expires: new Date(Date.now() + core.config.user_session_timeout_seconds * 1000),
-        maxAge: new Date(Date.now() + core.config.user_session_timeout_seconds * 1000),
+        proxy.web(req, res, { target: ore.config.ingestion_internal_endpoint });
+    } else if (urlMatchesRules(req.url, core.config.registry_url_rules)) {
+        core.log.info('redirecting to registry server: ' + req.url);
+
+        proxy.web(req, res, { target: core.config.registry_internal_endpoint });
+    } else if (urlMatchesRules(req.url, core.config.consumption_url_rules)) {
+        core.log.info('redirecting to consumption server: ' + req.url);
+
+        proxy.web(req, res, { target: core.config.consumption_internal_endpoint });
+    } else if (urlMatchesRules(req.url, [ core.config.headwaiter_path ])) {
+        res.writeHead(200, {
+            'Content-Type': 'application/json'
+        });
+
+        res.write(new Buffer(JSON.stringify(endpoints)));
+        res.end();
+    } else {
+        core.log.info('Unknown endpoint requested: ' + req.url);
+        res.writeHead(404);
+        res.end();
     }
-}));
 
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new BearerStrategy({}, core.services.accessTokens.verify));
-passport.use(new PublicKeyStrategy({}, core.services.principals.verifySignature));
-
-app.use(middleware.crossOrigin);
-
-app.enable('trust proxy');
-app.disable('x-powered-by');
-
-app.engine('handlebars', hbs.engine);
-app.set('view engine', 'handlebars');
-
-// only open endpoints when we have a connection to MongoDB.
-mongoose.connection.once('open', function () {
-    core.log.info("service connected to mongodb.");
-
-    core.services.initialize(function(err) {
-        if (err) return core.log.error("service failed to initialize: " + err);
-        if (!core.services.principals.servicePrincipal) return core.log.error("Service principal not available after initialize.");
-
-        server.listen(core.config.internal_port);
-
-        core.log.info("registry service has initialized itself, exposing api at: " + core.config.api_endpoint);
-
-        // REST API ENDPOINTS
-
-        // headwaiter endpoint
-        app.get(core.config.headwaiter_path,                                               controllers.headwaiter.index);
-
-        app.get(core.config.api_keys_path,              middleware.accessTokenAuth,        controllers.apiKeys.index);
-        app.post(core.config.api_keys_path,             middleware.accessTokenAuth,        controllers.apiKeys.create);
-
-        // ops endpoints
-        app.get(core.config.ops_path + '/health',                                          controllers.ops.health);
-
-        // principal endpoints
-        app.post(core.config.principals_path + '/auth',                                    controllers.principals.legacyAuthentication);
-
-        app.post(core.config.principals_path + '/publickey/auth', middleware.publicKeyAuth, controllers.principals.authenticate);
-        app.post(core.config.principals_path + '/secret/auth', middleware.secretAuth,      controllers.principals.authenticate);
-
-        app.get(core.config.principals_path + '/:id',   middleware.accessTokenAuth,        controllers.principals.show);
-        app.get(core.config.principals_path,            middleware.accessTokenAuth,        controllers.principals.index);
-
-        // TODO: CLI needs auth user and create user endpoints for now.
-        app.post(core.config.principals_path + '/user/auth',                               controllers.principals.authenticateUser);
-        app.post(core.config.principals_path,                                              controllers.principals.create);
-
-        app.post(core.config.principals_path + '/accesstoken', middleware.accessTokenAuth, controllers.principals.accessTokenFor);
-        app.post(core.config.principals_path + '/impersonate', middleware.accessTokenAuth, controllers.principals.impersonate);
-        app.put(core.config.principals_path + '/:id',   middleware.accessTokenAuth,        controllers.principals.update);
-        app.delete(core.config.principals_path + '/:id', middleware.accessTokenAuth,       controllers.principals.remove);
-
-        // USER AND OAUTH2 ENDPOINTS
-
-        // create user
-        app.get(core.config.user_create_path,                                              controllers.users.createForm);
-        app.post(core.config.user_create_path,                                             controllers.users.create);
-
-        // login user
-        app.get(core.config.user_login_path,                                               controllers.users.loginForm);
-        app.post(core.config.user_login_path,                                              controllers.users.login);
-
-        // change password
-        app.get(core.config.user_change_password_path,  ensureLoggedIn,                    controllers.users.changePasswordForm);
-        app.post(core.config.user_change_password_path, ensureLoggedIn,                    controllers.users.changePassword);
-
-        // delete account
-        app.get(core.config.user_delete_account_path,  ensureLoggedIn,                     controllers.users.deleteAccountForm);
-        app.post(core.config.user_delete_account_path, ensureLoggedIn,                     controllers.users.deleteAccount);
-
-        // reset password
-        app.get(core.config.user_reset_password_path,                                      controllers.users.resetPasswordForm);
-        app.post(core.config.user_reset_password_path,                                     controllers.users.resetPassword);
-
-        // logout
-        app.get(core.config.user_logout_path,           ensureLoggedIn,                    controllers.users.logout);
-
-        // privacy policy and terms of service
-        app.get(core.config.users_path + "/privacy",                                       controllers.users.privacy);
-        app.get(core.config.users_path + "/terms",                                         controllers.users.terms);
-
-        // user serialization and deserialization
-        passport.serializeUser(function(user, done) {
-            done(null, user.id);
-        });
-
-        passport.deserializeUser(function(id, done) {
-            core.services.principals.findByIdCached(core.services.principals.servicePrincipal, id, done);
-        });
-
-        // oauth2 endpoints
-        app.get(core.config.users_path + '/impersonate', ensureLoggedIn,                   controllers.users.impersonate);
-        app.get(core.config.users_path + '/authorize', ensureLoggedIn,                     controllers.users.authorize);
-        app.post(core.config.users_path + '/decision', ensureLoggedIn,                     controllers.users.decision);
-
-        // static files (static/ is mapped to the root API url for any path not already covered above)
-        app.use(express.static(path.join(__dirname, '/static')));
-
-        core.log.info("registry service has initialized API endpoints");
-
-        mongoose.connection.on('error', core.log.error);
-    });
 });
+
+server.listen(core.config.internal_port);
+core.log.info('frontdoor server listening on ' + core.config.internal_port);
