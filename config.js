@@ -2,13 +2,19 @@ var config = {
     internal_port: process.env.PORT,
 };
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === 'production') {
+
+} else if (process.env.NODE_ENV === 'test') {
+    console.log('frontdoor: using test configuration');
     config.internal_port = 3050;
+    config.external_port = 3050;
     config.registry_internal_endpoint = "http://localhost:3051";
     config.ingestion_internal_endpoint = "http://localhost:3052";
     config.consumption_internal_endpoint = "http://localhost:3053";
-} else if (process.env.NODE_ENV === 'dev') {
-    config.internal_port = 3050;
+} else {
+    console.log('frontdoor: using dev configuration');
+    config.internal_port = 3030;
+    config.external_port = 3030;
     config.registry_internal_endpoint = "http://localhost:3031";
     config.ingestion_internal_endpoint = "http://localhost:3032";
     config.consumption_internal_endpoint = "http://localhost:3033";
