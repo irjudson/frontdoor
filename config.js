@@ -11,6 +11,7 @@ if (process.env.NODE_ENV === 'production') {
     config.registry_internal_endpoint = "http://localhost:3051";
     config.ingestion_internal_endpoint = "http://localhost:3052";
     config.consumption_internal_endpoint = "http://localhost:3053";
+    config.consumption_internal_ws_endpoint = "ws://localhost:3053";
 } else {
     console.log('frontdoor: using dev configuration');
     config.internal_port = 3030;
@@ -18,6 +19,7 @@ if (process.env.NODE_ENV === 'production') {
     config.registry_internal_endpoint = "http://localhost:3031";
     config.ingestion_internal_endpoint = "http://localhost:3032";
     config.consumption_internal_endpoint = "http://localhost:3033";
+    config.consumption_internal_ws_endpoint = "ws://localhost:3033";
 }
 
 config.internal_port = config.internal_port || 3030;

@@ -1,25 +1,28 @@
 var core = require('nitrogen-core')
   , http = require('http')
-  , httpProxy = require('http-proxy');
+  , nodeHttpProxy = require('http-proxy')
+  , io = require('socket.io');
 
 core.config = require('./config');
 core.log = require('winston');
 
-var proxy = httpProxy.createProxyServer({
+var httpProxy = nodeHttpProxy.createProxyServer({});
+var wsProxy = nodeHttpProxy.createProxyServer({
+    ws: true,
+    target: {
+        host: 'localhost',
+        port: 3053
+    }
 });
 
-proxy.on('error', function (err, req, res) {
-    core.log.error('proxy error');
-    res.writeHead(500, {
-        'Content-Type': 'text/plain'
-    });
-
-    res.end();
+httpProxy.on('error', function (err, req, res) {
+    core.log.error('proxy error: ' + err);
 });
 
 var endpoints = {
     endpoints: {
         api_keys: core.config.api_keys_endpoint,
+        blobs: core.config.blobs_endpoint,
         messages: core.config.messages_endpoint,
         permissions: core.config.permissions_endpoint,
         principals: core.config.principals_endpoint,
@@ -48,22 +51,19 @@ var urlMatchesRules = function(url, paths) {
 }
 
 var server = http.createServer(function(req, res) {
-    core.log.info('request: ' + req.url);
-
     // proxy request to correct server cluster
     if (urlMatchesRules(req.url, core.config.ingestion_url_rules) && req.method === "POST") {
         core.log.info('redirecting to ingestion server: ' + req.url);
 
-        proxy.web(req, res, { target: core.config.ingestion_internal_endpoint });
+        httpProxy.web(req, res, { target: core.config.ingestion_internal_endpoint });
     } else if (urlMatchesRules(req.url, core.config.registry_url_rules)) {
         core.log.info('redirecting to registry server: ' + req.url);
 
-        proxy.web(req, res, { target: core.config.registry_internal_endpoint });
+        httpProxy.web(req, res, { target: core.config.registry_internal_endpoint });
     } else if (urlMatchesRules(req.url, core.config.consumption_url_rules)) {
         core.log.info('redirecting to consumption server: ' + req.url);
-        console.dir(req);
 
-        proxy.web(req, res, { target: core.config.consumption_internal_endpoint });
+        httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
     } else if (urlMatchesRules(req.url, [ core.config.headwaiter_path ])) {
         res.writeHead(200, {
             'Content-Type': 'application/json'
@@ -71,12 +71,18 @@ var server = http.createServer(function(req, res) {
 
         res.write(new Buffer(JSON.stringify(endpoints)));
         res.end();
+    } else if (urlMatchesRules(req.url, [ "/socket.io" ])) {
+        // HTTP socket.io
+        httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
     } else {
         core.log.info('Unknown endpoint requested: ' + req.url);
         res.writeHead(404);
         res.end();
     }
+});
 
+server.on('upgrade', function (req, socket, head) {
+    wsProxy.ws(req, socket, head);
 });
 
 server.listen(core.config.internal_port);
