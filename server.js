@@ -51,6 +51,17 @@ var urlMatchesRules = function(url, paths) {
 }
 
 var server = http.createServer(function(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', "*");
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Methods', 'OPTIONS,GET,POST,PUT,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // intercept OPTIONS method
+    if ('OPTIONS' == req.method) {
+        res.writeHead(200);
+        return res.end();
+    }
+
     // proxy request to correct server cluster
     if (urlMatchesRules(req.url, core.config.ingestion_url_rules) && req.method === "POST") {
         core.log.info('redirecting to ingestion server: ' + req.url);
@@ -60,24 +71,18 @@ var server = http.createServer(function(req, res) {
         core.log.info('redirecting to registry server: ' + req.url);
 
         httpProxy.web(req, res, { target: core.config.registry_internal_endpoint });
-    } else if (urlMatchesRules(req.url, core.config.consumption_url_rules)) {
-        core.log.info('redirecting to consumption server: ' + req.url);
-
-        httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
     } else if (urlMatchesRules(req.url, [ core.config.headwaiter_path ])) {
+        console.log('serving ' + req.url);
         res.writeHead(200, {
             'Content-Type': 'application/json'
         });
 
         res.write(new Buffer(JSON.stringify(endpoints)));
         res.end();
-    } else if (urlMatchesRules(req.url, [ "/socket.io" ])) {
+    } else {
+        core.log.info('redirecting to consumption server: ' + req.url);
         // HTTP socket.io
         httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
-    } else {
-        core.log.info('Unknown endpoint requested: ' + req.url);
-        res.writeHead(404);
-        res.end();
     }
 });
 
