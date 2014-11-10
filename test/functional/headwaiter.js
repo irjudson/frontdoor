@@ -19,6 +19,7 @@ describe('headwaiter endpoint', function() {
             assert.equal(core.utils.stringEndsWith(body.endpoints.permissions, "/permissions"), true);
             assert.equal(core.utils.stringEndsWith(body.endpoints.principals, "/principals"), true);
             assert(body.endpoints.subscriptions);
+            assert.equal(core.utils.stringEndsWith(body.endpoints.users, "/user"), true);
 
             done();
         });

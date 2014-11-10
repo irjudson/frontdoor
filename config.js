@@ -62,6 +62,7 @@ config.subscriptions_path = '/';
 config.subscriptions_endpoint = config.base_endpoint + config.subscriptions_path;
 
 config.users_path = "/user";
+config.users_endpoint = config.base_endpoint + config.users_path;
 
 config.ingestion_url_rules = [
     config.messages_path
