@@ -3,7 +3,7 @@ var config = {
 };
 
 if (process.env.NODE_ENV === 'production') {
-
+    config.internal_port = 8080;
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
     config.internal_port = 3050;
@@ -16,10 +16,6 @@ if (process.env.NODE_ENV === 'production') {
     console.log('frontdoor: using dev configuration');
     config.internal_port = 3030;
     config.external_port = 3030;
-    config.registry_internal_endpoint = "http://localhost:3031";
-    config.ingestion_internal_endpoint = "http://localhost:3032";
-    config.consumption_internal_endpoint = "http://localhost:3033";
-    config.consumption_internal_ws_endpoint = "ws://localhost:3033";
 }
 
 config.internal_port = config.internal_port || 3030;
@@ -27,6 +23,11 @@ config.external_port = config.external_port || 443;
 config.protocol = process.env.PROTOCOL || config.protocol || "https";
 config.host = process.env.HOST_NAME || config.host || "localhost";
 config.mongodb_connection_string = config.mongodb_connection_string || process.env.MONGODB_CONNECTION_STRING;
+
+config.registry_internal_endpoint = process.env.REGISTRY_INTERNAL_ENDPOINT || "http://localhost:3031";
+config.ingestion_internal_endpoint = process.env.INGESTION_INTERNAL_ENDPOINT || "http://localhost:3032";
+config.consumption_internal_endpoint = process.env.CONSUMPTION_INTERNAL_ENDPOINT || "http://localhost:3033";
+config.consumption_internal_ws_endpoint = process.env.CONSUMPTION_INTERNAL_WS_ENDPOINT || "ws://localhost:3033";
 
 // Endpoint URI configuration
 
