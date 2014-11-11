@@ -70,7 +70,10 @@ config.ingestion_url_rules = [
 
 config.registry_url_rules = [
     config.api_keys_path,
-    config.principals_path
+    config.principals_path,
+    config.users_path,
+    "/bootstrap.min",
+    "/fonts"
 ];
 
 config.consumption_url_rules = [

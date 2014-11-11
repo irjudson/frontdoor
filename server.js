@@ -1,17 +1,32 @@
 var core = require('nitrogen-core')
+  , fs = require('fs')
   , http = require('http')
   , nodeHttpProxy = require('http-proxy')
-  , io = require('socket.io');
+  , io = require('socket.io')
+  , url = require('url');
 
 core.config = require('./config');
 core.log = require('winston');
 
-var httpProxy = nodeHttpProxy.createProxyServer({});
+var serverOptions = {};
+if (core.config.internal_port === 443) {
+    serverOptions = {
+        secure: true,
+        ssl: {
+            key: fs.readFileSync('ssl/ssl-key.pem', 'utf8'),
+            cert: fs.readFileSync('ssl/ss-cert.pem', 'utf8')
+        }
+    };
+}
+
+var urlParts = url.parse(core.config.consumption_internal_ws_endpoint);
+
+var httpProxy = nodeHttpProxy.createProxyServer(serverOptions);
 var wsProxy = nodeHttpProxy.createProxyServer({
     ws: true,
     target: {
-        host: 'localhost',
-        port: 3053
+        host: urlParts.hostname,
+        port: urlParts.port
     }
 });
 
@@ -72,7 +87,7 @@ var server = http.createServer(function(req, res) {
 
         httpProxy.web(req, res, { target: core.config.registry_internal_endpoint });
     } else if (urlMatchesRules(req.url, [ core.config.headwaiter_path ])) {
-        console.log('serving ' + req.url);
+        core.log.info('serving ' + req.url);
         res.writeHead(200, {
             'Content-Type': 'application/json'
         });
