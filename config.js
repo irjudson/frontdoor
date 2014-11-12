@@ -3,11 +3,13 @@ var config = {
 };
 
 if (process.env.NODE_ENV === 'production') {
-    config.internal_port = 8080;
+    config.internal_port = 4443;
+    config.external_port = 443;
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
     config.internal_port = 3050;
     config.external_port = 3050;
+
     config.registry_internal_endpoint = "http://localhost:3051";
     config.ingestion_internal_endpoint = "http://localhost:3052";
     config.consumption_internal_endpoint = "http://localhost:3053";
