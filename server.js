@@ -9,12 +9,20 @@ core.config = require('./config');
 core.log = require('winston');
 
 var serverOptions = {};
-if (core.config.internal_port === 443) {
+core.log.info('external port: ' + core.config.external_port);
+
+if (core.config.external_port === 443) {
+    core.log.info('initializing ssl');
+    var cert = fs.readFileSync('../certs/' + core.config.host + '.chained.crt', 'utf8');
+    core.log.info('ssl cert: ' + cert);
+    var key = fs.readFileSync('../certs/' + core.config.host + '.key', 'utf8');
+    core.log.info('ssl key: ' + key);
+
     serverOptions = {
         secure: true,
         ssl: {
-            key: fs.readFileSync('ssl/ssl-key.pem', 'utf8'),
-            cert: fs.readFileSync('ssl/ss-cert.pem', 'utf8')
+            cert: cert,
+            key: key
         }
     };
 }
