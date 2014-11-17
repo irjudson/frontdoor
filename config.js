@@ -3,8 +3,8 @@ var config = {
 };
 
 if (process.env.NODE_ENV === 'production') {
-    config.internal_port = 4443;
-    config.external_port = 443;
+    config.internal_port = 8080;
+    config.external_port = 80;
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
     config.internal_port = 3050;
@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 config.internal_port = config.internal_port || 3030;
-config.external_port = config.external_port || 443;
+config.external_port = config.external_port || 80;
 config.protocol = process.env.PROTOCOL || config.protocol || "https";
 config.host = process.env.HOST_NAME || config.host || "localhost";
 config.mongodb_connection_string = config.mongodb_connection_string || process.env.MONGODB_CONNECTION_STRING;

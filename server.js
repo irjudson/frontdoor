@@ -9,6 +9,8 @@ core.config = require('./config');
 core.log = require('winston');
 
 var serverOptions = {};
+
+/*
 core.log.info('external port: ' + core.config.external_port);
 
 if (core.config.external_port === 443) {
@@ -26,6 +28,7 @@ if (core.config.external_port === 443) {
         }
     };
 }
+*/
 
 var urlParts = url.parse(core.config.consumption_internal_ws_endpoint);
 
