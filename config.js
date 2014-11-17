@@ -4,7 +4,7 @@ var config = {
 
 if (process.env.NODE_ENV === 'production') {
     config.internal_port = 8080;
-    config.external_port = 80;
+    config.external_port = 443;
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
     config.internal_port = 3050;
