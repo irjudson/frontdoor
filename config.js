@@ -75,6 +75,7 @@ config.registry_url_rules = [
     config.principals_path,
     config.users_path,
     "/bootstrap.min",
+    "/favicon.ico",
     "/fonts"
 ];
 
