@@ -90,10 +90,12 @@ var server = http.createServer(function(req, res) {
 
     // proxy request to correct server cluster
     if (urlMatchesRules(req.url, core.config.ingestion_url_rules) && req.method === "POST") {
+        core.log.info('ingestion server endpoint: ' + core.config.ingestion_internal_endpoint);
         core.log.info('redirecting to ingestion server: ' + req.url);
 
         httpProxy.web(req, res, { target: core.config.ingestion_internal_endpoint });
     } else if (urlMatchesRules(req.url, core.config.registry_url_rules)) {
+        core.log.info('registry server endpoint: ' + core.config.registry_internal_endpoint);
         core.log.info('redirecting to registry server: ' + req.url);
 
         httpProxy.web(req, res, { target: core.config.registry_internal_endpoint });
@@ -106,6 +108,7 @@ var server = http.createServer(function(req, res) {
         res.write(new Buffer(JSON.stringify(endpoints)));
         res.end();
     } else {
+        core.log.info('consumption server endpoint: ' + core.config.consumption_internal_endpoint);
         core.log.info('redirecting to consumption server: ' + req.url);
         // HTTP socket.io
         httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
