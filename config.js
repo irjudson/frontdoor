@@ -3,11 +3,11 @@ var config = {
 };
 
 if (process.env.NODE_ENV === 'production') {
-    config.internal_port = 8080;
+    config.internal_port = config.internal_port || 8080;
     config.external_port = 443;
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
-    config.internal_port = 3050;
+    config.internal_port = config.internal_port || 3050;
     config.external_port = 3050;
 
     config.registry_internal_endpoint = "http://localhost:3051";
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV === 'production') {
     config.consumption_internal_ws_endpoint = "ws://localhost:3053";
 } else {
     console.log('frontdoor: using dev configuration');
-    config.internal_port = 3030;
+    config.internal_port = config.internal_port || 3030;
     config.external_port = 3030;
 }
 
