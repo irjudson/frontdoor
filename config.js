@@ -82,7 +82,8 @@ config.registry_url_rules = [
 config.consumption_url_rules = [
     config.blobs_path,
     config.messages_path,
-    config.permissions_path
+    config.permissions_path,
+    "/client"
 ];
 
 module.exports = config;
