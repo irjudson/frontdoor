@@ -49,6 +49,7 @@ var endpoints = {
     endpoints: {
         api_keys: core.config.api_keys_endpoint,
         blobs: core.config.blobs_endpoint,
+        images: core.config.images_endpoint,
         messages: core.config.messages_endpoint,
         permissions: core.config.permissions_endpoint,
         principals: core.config.principals_endpoint,

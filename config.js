@@ -57,6 +57,8 @@ config.blobs_endpoint = config.base_endpoint + config.blobs_path;
 config.headwaiter_path = config.v1_api_path + "/headwaiter";
 config.headwaiter_uri = config.base_endpoint + config.headwaiter_path;
 
+config.images_endpoint = process.env.IMAGES_ENDPOINT || 'http://localhost/images';
+
 config.messages_path = config.v1_api_path + "/messages";
 config.messages_endpoint = config.base_endpoint + config.messages_path;
 

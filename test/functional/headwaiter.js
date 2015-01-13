@@ -15,6 +15,7 @@ describe('headwaiter endpoint', function() {
 
             assert.equal(core.utils.stringEndsWith(body.endpoints.api_keys, "/api_keys"), true);
             assert.equal(core.utils.stringEndsWith(body.endpoints.blobs, "/blobs"), true);
+            assert(body.endpoints.images);
             assert.equal(core.utils.stringEndsWith(body.endpoints.messages, "/messages"), true);
             assert.equal(core.utils.stringEndsWith(body.endpoints.permissions, "/permissions"), true);
             assert.equal(core.utils.stringEndsWith(body.endpoints.principals, "/principals"), true);

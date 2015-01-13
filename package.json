@@ -17,9 +17,11 @@
     "node": "0.10.x"
   },
   "dependencies": {
-    "http-proxy": "~1.5.3",
+    "async": "^0.9.0",
+    "http-proxy": "^1.8.1",
     "nitrogen-core": "~0.3",
-    "socket.io": "~0.9.17",
+    "request": "^2.51.0",
+    "socket.io": "^0.9.17",
     "winston": "~0.8.1"
   },
   "devDependencies": {
