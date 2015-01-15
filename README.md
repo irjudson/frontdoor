@@ -2,6 +2,13 @@
 
 Proxy services to consolidate the Nitrogen API surface and provide central request middleware.
 
+## Installation
+
+1. `git clone https://github.com/nitrogenjs/frontdoor`
+2. `cd frontdoor`
+3. `npm install`
+4. `node server.js`
+
 ## How to contribute
 
 1.  Feedback:  We'd love feedback on what problems you are using Nitrogen to solve.  Obviously, we'd also like to hear about where you ran into sharp edges and dead ends.   Let us know by filing an issue with the project.
