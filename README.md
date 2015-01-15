@@ -4,12 +4,10 @@ Proxy services to consolidate the Nitrogen API surface and provide central reque
 
 ## Installation
 
-`
-> git clone https://github.com/nitrogenjs/frontdoor
-> cd frontdoor
-> npm install
-> node server.js
-`
+`> git clone https://github.com/nitrogenjs/frontdoor`
+`> cd frontdoor`
+`> npm install`
+`> node server.js`
 
 ## How to contribute
 
