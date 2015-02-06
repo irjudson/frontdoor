@@ -6,12 +6,13 @@ var config = {
 if (process.env.NODE_ENV === 'production') {
     config.internal_port = config.internal_port || 8080;
     config.external_port = config.external_port || 443;
+    config.protocol = process.env.PROTOCOL || "https";
 } else if (process.env.NODE_ENV === 'test') {
     console.log('frontdoor: using test configuration');
 
     config.internal_port = config.internal_port || 3050;
     config.external_port = config.external_port || 3050;
-    config.protocol = 'http';
+    config.protocol = process.env.PROTOCOL || "http";
 
     config.registry_internal_endpoint = "http://localhost:3051";
     config.ingestion_internal_endpoint = "http://localhost:3052";
@@ -21,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log('frontdoor: using dev configuration');
 
     config.external_port = config.external_port || 3030;
-    config.protocol = 'http';
+    config.protocol = process.env.PROTOCOL || "http";
 
     config.registry_internal_endpoint = "http://localhost:3031";
     config.ingestion_internal_endpoint = "http://localhost:3032";
