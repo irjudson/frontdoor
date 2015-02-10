@@ -10,26 +10,6 @@ core.log = require('winston');
 
 var serverOptions = {};
 
-/*
-core.log.info('external port: ' + core.config.external_port);
-
-if (core.config.external_port === 443) {
-    core.log.info('initializing ssl');
-    var cert = fs.readFileSync('../certs/' + core.config.host + '.chained.crt', 'utf8');
-    core.log.info('ssl cert: ' + cert);
-    var key = fs.readFileSync('../certs/' + core.config.host + '.key', 'utf8');
-    core.log.info('ssl key: ' + key);
-
-    serverOptions = {
-        secure: true,
-        ssl: {
-            cert: cert,
-            key: key
-        }
-    };
-}
-*/
-
 var urlParts = url.parse(core.config.consumption_internal_ws_endpoint);
 
 var httpProxy = nodeHttpProxy.createProxyServer(serverOptions);
