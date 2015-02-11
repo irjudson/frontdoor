@@ -3,6 +3,7 @@ var core = require('nitrogen-core')
   , http = require('http')
   , nodeHttpProxy = require('http-proxy')
   , io = require('socket.io')
+  , request = require('request')
   , url = require('url');
 
 core.config = require('./config');
@@ -92,7 +93,11 @@ var server = http.createServer(function(req, res) {
         core.log.info('consumption server endpoint: ' + core.config.consumption_internal_endpoint);
         core.log.info('redirecting ' + req.method + ' to consumption server: ' + req.url);
 
-        // HTTP socket.io
+        request(core.config.consumption_internal_endpoint + req.url, function(error, response, body) {
+            core.log.info('direct error: ' + error);
+            core.log.info('direct body: ' + body);
+        });
+
         httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
     }
 });
