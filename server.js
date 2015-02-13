@@ -102,7 +102,7 @@ server.on('upgrade', function (req, socket, head) {
 });
 
 server.on('error', function(e) {
-    console.dir('frontdoor proxying error: ' + e);
+    core.log.error('frontdoor proxying error: ' + e);
 });
 
 server.listen(core.config.internal_port);
