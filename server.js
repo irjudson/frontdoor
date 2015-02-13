@@ -93,12 +93,16 @@ var server = http.createServer(function(req, res) {
         core.log.info('consumption server endpoint: ' + core.config.consumption_internal_endpoint);
         core.log.info('redirecting ' + req.method + ' to consumption server: ' + req.url);
 
-        httpProxy.web(req, res, { forward: true, target: core.config.consumption_internal_endpoint });
+        httpProxy.web(req, res, { target: core.config.consumption_internal_endpoint });
     }
 });
 
 server.on('upgrade', function (req, socket, head) {
     wsProxy.ws(req, socket, head);
+});
+
+server.on('error', function(e) {
+    console.dir('frontdoor proxying error: ' + e);
 });
 
 server.listen(core.config.internal_port);
