@@ -101,5 +101,9 @@ server.on('upgrade', function (req, socket, head) {
     wsProxy.ws(req, socket, head);
 });
 
+server.on('error', function(e) {
+    core.log.error('frontdoor proxying error: ' + e);
+});
+
 server.listen(core.config.internal_port);
 core.log.info('frontdoor server listening on ' + core.config.internal_port);
